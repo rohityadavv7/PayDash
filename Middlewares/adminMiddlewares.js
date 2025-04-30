@@ -3,9 +3,9 @@ const { User } = require("../Models/userModel")
 
 const adminMiddleware = async(req,res,next)=> {
 
-    const {token} = req.headers
+    const token = req.headers.authorization?.split(" ")[1]
 
-    console.log(token)
+    // console.log("token in adminmiddleware-> ",token)
 
     if(!token){
         return res.status(404).json({
@@ -18,11 +18,11 @@ const adminMiddleware = async(req,res,next)=> {
 
     const userDetails = await User.findById({_id:decodedToken.userId})
 
-    console.log("user details in middlewares -> ",userDetails)
+    // console.log("user details in middlewares -> ",userDetails)
 
     if(userDetails.role_Type === "admin"){
         
-        console.log("token details->",decodedToken)
+        // console.log("token details->",decodedToken)
 
         req.userId = decodedToken.userId
 

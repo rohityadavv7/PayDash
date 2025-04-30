@@ -6,12 +6,14 @@ require("dotenv").config()
 
 const user = require("./routes/userRoutes")
 const admin = require("./routes/adminRoutes")
+const invoice = require("./routes/invoiceRoutes")
 
 //middlewares
 app.use(express.json())
 
 app.use("/api/v1/auth", user)
 app.use("/api/v1/admin/clients", admin)
+app.use("/api/v1/admin/invoice", invoice)
 
 const PORT = process.env.PORT || 3000
 
