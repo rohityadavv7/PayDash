@@ -2,7 +2,7 @@ const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 const ObjectId = mongoose.ObjectId
 
-const usereSchema = new Schema({
+const userSchema = new Schema({
     name:{
         type:String,
         required:true
@@ -24,12 +24,12 @@ const usereSchema = new Schema({
     },
     subscription:{
         type:ObjectId,
-        ref:"Subcription",
+        ref:"Subscription",
         default:null
     },
 },{timestamps:true})
 
-const User = mongoose.model("User", usereSchema)
-module.exports={
-    User
+const User = mongoose.model("User", userSchema); 
+module.exports ={
+    User:User
 }

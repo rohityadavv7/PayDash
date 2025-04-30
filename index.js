@@ -4,8 +4,11 @@ const app = express()
 
 require("dotenv").config()
 
+const user = require("./routes/userRoutes")
+
 //middlewares
 app.use(express.json())
+app.use("/api/v1/auth", user)
 
 const PORT = process.env.PORT || 3000
 
