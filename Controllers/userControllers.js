@@ -1,19 +1,43 @@
 
 const { User } = require("../Models/userModel")
 const bcrypt = require("bcrypt")
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
+const { Client } = require("../Models/clientModel");
+const { Invoice } = require("../Models/invoiceModel");
 
 exports.Signup = async(req,res) => {
    try{
 
-        const {name,email,password} = req.body;
+        const {name,email,password, role_Type} = req.body;
         console.log(name,password,email)
+
+        let checkUserAsClient;
+        let invoicesList;
+        let adminName;
 
         if(!name || !email || !password){
             return res.status(403).json({
                 success:false,
                 message:"insufficient data"
             })
+        }
+
+        if(role_Type === "user"){
+            //check in clients schema if user already exists as client to some admin
+             checkUserAsClient = await Client.findOne({email})
+
+            if(checkUserAsClient){
+                //get all the invoices related to this user
+                invoicesList = await Invoice.find({_id:checkUserAsClient._id})
+
+                if(invoicesList.length === 0){
+                    const admin = await User.findById({_id:checkUserAsClient.userId})
+
+                    console.log("admin details -> ", admin)
+
+                    adminName = admin.name;
+                }
+            }
         }
 
         const checkUser = await User.findOne({email})
@@ -33,13 +57,35 @@ exports.Signup = async(req,res) => {
             const createdUser = await User.create({
                 name:name,
                 email:email,
-                passwordHash:hashedPass
+                passwordHash:hashedPass,
+                role_Type:role_Type
             })
+
+            const responseData = {
+                success: true,
+                message: "User signed up!",
+                createdUser,
+              };
+              
+              if (checkUserAsClient) {
+                
+                if(invoicesList.length !== 0){
+                    responseData.notice = "We have found invoices under your name";
+                    responseData.Invoices = invoicesList
+                }
+                else{
+                    responseData.notice = `Welcome, you are already added as Client by ${adminName}`;
+                }
+              }
+              else{
+                if(role_Type === "user")
+                    responseData.notice = "No invoices found!"
+              }
 
             return res.status(200).json({
                 success:true,
                 message:"user signed up!",
-                createdUser
+                responseData
             })
         }
 

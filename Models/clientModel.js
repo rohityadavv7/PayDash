@@ -1,6 +1,6 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
-const ObjcectId = mongoose.ObjcectId
+const ObjcectId = mongoose.ObjectId
 
 const clientSchema = new Schema({
     userId:{
@@ -22,7 +22,7 @@ const clientSchema = new Schema({
         required:true
     },
     address:{
-        trype:String,
+        type:String,
         required:true
     },
     phone_Number:{
@@ -32,5 +32,5 @@ const clientSchema = new Schema({
 
 const Client = mongoose.model("Client",clientSchema)
 module.exports = {
-    Client
+    Client:Client
 }
