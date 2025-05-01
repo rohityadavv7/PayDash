@@ -1,5 +1,6 @@
 //ALL THE CONTROLLERS RELATED TO INVOICE NEEDS TO BE HERE
 
+const { Client } = require("../Models/clientModel");
 const { Invoice } = require("../Models/invoiceModel");
 
 exports.createInvoice = async(req,res) => {
@@ -7,11 +8,11 @@ exports.createInvoice = async(req,res) => {
 
         const userId = req.userId;
 
-        console.log("userId in invoice-> ", userId)
+        // console.log("userId in invoice-> ", userId)
 
         const {clientId, invoiceDetails} = req.body;
 
-        console.log(clientId, invoiceDetails);
+        // console.log(clientId, invoiceDetails);
 
         if(!clientId || !invoiceDetails){
             return res.status(403).json({
@@ -20,27 +21,37 @@ exports.createInvoice = async(req,res) => {
             })
         }
 
-        const newInvoice = await Invoice.create({
-            userId:userId,
-            clientId:clientId,
-            date:invoiceDetails.date,
-            due_Date:invoiceDetails.due_Date,
-            items:invoiceDetails.items,
-            tax:invoiceDetails.tax,
-            discount:invoiceDetails.discount,
-            total:invoiceDetails.total,
-            currency:invoiceDetails.currency,
-            notes:invoiceDetails.notes,
-            status:invoiceDetails.status,
+        const checkClient = await Client.findById({_id:clientId})
+
+        if(checkClient){
             
-        })
-
-        return res.status(200).json({
-            success:true,
-            message:"Invoice created",
-            newInvoice
-        })
-
+            const newInvoice = await Invoice.create({
+                userId:userId,
+                clientId:clientId,
+                date:invoiceDetails.date,
+                due_Date:invoiceDetails.due_Date,
+                items:invoiceDetails.items,
+                tax:invoiceDetails.tax,
+                discount:invoiceDetails.discount,
+                total:invoiceDetails.total,
+                currency:invoiceDetails.currency,
+                notes:invoiceDetails.notes,
+                status:invoiceDetails.status,
+                
+            })
+    
+            return res.status(200).json({
+                success:true,
+                message:"Invoice created",
+                newInvoice
+            })
+        }
+        else{
+            return res.status(403).json({
+                success:false,
+                message:"client not found!"
+            })
+        }
 
     }catch(error){
         console.log(error.message)

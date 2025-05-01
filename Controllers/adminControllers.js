@@ -4,15 +4,15 @@ const { Client } = require("../Models/clientModel");
 
 exports.createClient = async(req,res) => {
     try{
-        console.log("in")
+        // console.log("in")
 
         const userId = req.userId;
 
-        console.log(userId);
+        // console.log(userId);
 
         const {name,email,companyName,address,phoneNo} = req.body;
 
-        console.log(name,email,companyName,address,phoneNo)
+        // console.log(name,email,companyName,address,phoneNo)
 
         const checkClient = await Client.findOne({email})
 
@@ -23,6 +23,7 @@ exports.createClient = async(req,res) => {
             })
         }
         else{
+            
             const newClient = await Client.create({
                 userId:userId,
                 name:name,

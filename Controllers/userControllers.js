@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken");
 const { Client } = require("../Models/clientModel");
 const { Invoice } = require("../Models/invoiceModel");
+const mongoose = require("mongoose")
 
 exports.Signup = async(req,res) => {
    try{
@@ -23,6 +24,7 @@ exports.Signup = async(req,res) => {
         }
 
         if(role_Type === "user"){
+            
             //check in clients schema if user already exists as client to some admin
              checkUserAsClient = await Client.findOne({email})
 
@@ -33,7 +35,7 @@ exports.Signup = async(req,res) => {
                 if(invoicesList.length === 0){
                     const admin = await User.findById({_id:checkUserAsClient.userId})
 
-                    console.log("admin details -> ", admin)
+                    // console.log("admin details -> ", admin)
 
                     adminName = admin.name;
                 }
@@ -114,17 +116,29 @@ exports.Login = async(req,res) => {
         const checkUser = await User.findOne({email});
 
         if(checkUser){
-            const token = jwt.sign({
-                userId:checkUser._id
-            },process.env.JWT_SECRET)
 
-            console.log(token)
+            //verify the password
 
-            return res.status(200).json({
-                success:true,
-                message:"User logged in!",
-                token
-            })
+            if(await bcrypt.compare(password,checkUser.passwordHash)){
+                const token = jwt.sign({
+                    userId:checkUser._id
+                },process.env.JWT_SECRET)
+    
+                console.log(token)
+    
+                return res.status(200).json({
+                    success:true,
+                    message:"User logged in!",
+                    token
+                })
+            }
+            else{
+                return res.status(401).json({
+                    success:false,
+                    message:"Incorrect password!"
+                })
+            }
+            
         }
         else{
             return res.status(404).json({
@@ -136,6 +150,158 @@ exports.Login = async(req,res) => {
         return res.status(500).json({
             success:false,
             message:"Something went wrong loggin in!, please try again!"
+        })
+    }
+}
+
+//GET CURRENT USER PROFILE
+exports.getMyProfile = async(req,res) => {
+    try{
+        const verificationId = req.verificationId
+
+        console.log("got the if-> ", verificationId)
+
+        const myProfileData = await User.findById({_id:verificationId})
+
+        console.log("user data -> ", myProfileData)
+
+        return res.status(200).json({
+            success:true,
+            message:"fetched profile data",
+            myProfileData
+        })
+    }catch(error){
+        return res.status(500).json({
+            success:false,
+            message:"Couldn;t fetch your data!"
+        })
+    }
+}
+
+//UPDATE USER PROFILE
+exports.updateProfile = async(req,res) => {
+    try{
+        const {name,email,password} = req.body;
+
+        const verificationId = req.verificationId
+
+        // console.log(name,email,password)
+
+        //check for user
+        const updatedProfile = await User.findByIdAndUpdate({_id:verificationId},{
+            name:name,
+            email:email,
+            passwordHash:password
+        },{new:true})
+
+        return res.status(200).json({
+            success:true,
+            message:"Profile updated!",
+            updatedProfile
+        })
+    }catch(error){
+        return res.status(500).json({
+            success:false,
+            message:"Could not update your profile"
+        })
+    }
+}
+
+//DELETE USER DATA
+exports.deletProfile = async(req,res) => {
+    try{
+        const verificationId = req.verificationId
+
+        console.log(verificationId)
+
+        const userData = await User.findById({_id:verificationId})
+        console.log("user data -> ", userData)
+
+        if(userData.role_Type === "admin"){
+
+            const clientsData = await Client.find({userId:verificationId});
+        
+            // console.log("all clients-> ", clientsData)
+
+
+            if(clientsData.length !== 0){
+                return res.status(403).json({
+                    success:false,
+                    message:"Clear your clients first!"
+                })
+            }
+            else{
+                await User.findByIdAndDelete({_id:userData._id})
+
+                return res.status(200).json({
+                    success:true,
+                    message:"Profile deleted!"
+                })
+            }
+        }
+        else{
+
+            const invoiceList = await User.aggregate([
+                {
+                  $match: { _id: new mongoose.Types.ObjectId(verificationId)  }  // Match the user based on userId from token
+                },
+                {
+                  $lookup: {
+                    from: 'clients',  // Name of the Client collection
+                    localField: 'email',  // Match email from User schema to email in Client schema
+                    foreignField: 'email',  // Email is the linking field
+                    as: 'clientDetails'  // Will return client details in 'clientDetails' field
+                  }
+                },
+                {
+                  $unwind: '$clientDetails'  // Unwind the clientDetails array to get client object
+                },
+                {
+                  $lookup: {
+                    from: 'invoices',  // Name of the Invoice collection
+                    localField: 'clientDetails._id',  // Use the clientId (clientDetails._id) to query the Invoice schema
+                    foreignField: 'clientId',  // Invoice schema has clientId field
+                    as: 'invoices'  // Return the invoices in 'invoices' field
+                  }
+                },
+                {
+                  $unwind: '$invoices'  // Unwind invoices array to get individual invoices
+                },
+                {
+                  $project: {
+                    'invoices._id': 1,
+                    'invoices.date': 1,
+                    'invoices.total': 1,
+                    'invoices.status': 1,
+                    'invoices.clientId': 1,  // Include relevant invoice details
+                    'invoices.items': 1,
+                    'invoices.notes': 1,
+                  }
+                }
+              ]);
+
+
+              console.log("invoices-> ",invoiceList)
+
+            if(invoiceList.length !== 0){
+                return res.status(403).json({
+                    success:false,
+                    message:"Clear your Invoices first!"
+                })
+            }
+            
+
+            await User.findByIdAndDelete({_id:userData._id})
+
+            return res.status(200).json({
+                success:true,
+                message:"Profile deleted!"
+            })
+        }
+    }catch(error){
+        return res.status(500).json({
+            success:false,
+            message:"Something went wrong!"
         })
     }
 }
