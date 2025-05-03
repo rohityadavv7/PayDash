@@ -243,29 +243,29 @@ exports.deletProfile = async(req,res) => {
 
             const invoiceList = await User.aggregate([
                 {
-                  $match: { _id: new mongoose.Types.ObjectId(verificationId)  }  // Match the user based on userId from token
+                  $match: { _id: new mongoose.Types.ObjectId(verificationId)  }  
                 },
                 {
                   $lookup: {
-                    from: 'clients',  // Name of the Client collection
-                    localField: 'email',  // Match email from User schema to email in Client schema
-                    foreignField: 'email',  // Email is the linking field
-                    as: 'clientDetails'  // Will return client details in 'clientDetails' field
+                    from: 'clients',  
+                    localField: 'email',  
+                    foreignField: 'email',  
+                    as: 'clientDetails'  
                   }
                 },
                 {
-                  $unwind: '$clientDetails'  // Unwind the clientDetails array to get client object
+                  $unwind: '$clientDetails'  
                 },
                 {
                   $lookup: {
-                    from: 'invoices',  // Name of the Invoice collection
-                    localField: 'clientDetails._id',  // Use the clientId (clientDetails._id) to query the Invoice schema
-                    foreignField: 'clientId',  // Invoice schema has clientId field
-                    as: 'invoices'  // Return the invoices in 'invoices' field
+                    from: 'invoices', 
+                    localField: 'clientDetails._id',  
+                    foreignField: 'clientId',  
+                    as: 'invoices'  
                   }
                 },
                 {
-                  $unwind: '$invoices'  // Unwind invoices array to get individual invoices
+                  $unwind: '$invoices'  
                 },
                 {
                   $project: {
@@ -273,7 +273,7 @@ exports.deletProfile = async(req,res) => {
                     'invoices.date': 1,
                     'invoices.total': 1,
                     'invoices.status': 1,
-                    'invoices.clientId': 1,  // Include relevant invoice details
+                    'invoices.clientId': 1,  
                     'invoices.items': 1,
                     'invoices.notes': 1,
                   }

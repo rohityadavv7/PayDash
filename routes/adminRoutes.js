@@ -1,6 +1,7 @@
 const express = require("express")
 const { createClient, getAllClients, getClientById, updateClient, deleteClient } = require("../Controllers/adminControllers")
 const adminMiddleware = require("../Middlewares/adminMiddlewares")
+const { getAllInvoices } = require("../Controllers/invoiceControllers")
 const router = express.Router()
 
 
@@ -20,5 +21,7 @@ router.put("/updateClient", adminMiddleware, updateClient);
 
 //ADMIN CAN DELETE A SPECIFIC CLIENT DETAILS
 router.delete("/deleteClient", adminMiddleware,deleteClient);
+
+
 
 module.exports = router

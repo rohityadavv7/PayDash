@@ -47,7 +47,7 @@ const invoiceSchema = new Schema({
     },
     status:{
         type:String,
-        enum:["draft", "sent", "paid", "overdue"],
+        enum:["draft","sent","paid","overdue"],
         default:""
     },
     pdfUrl:{
